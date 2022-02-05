@@ -1,10 +1,10 @@
 const router = require('express').Router();
 const sequelize = require('../../config/connection');
-const { Post, User, Vote } = require('../../models');
+const { Post, User, Vote, Comment } = require('../../models');
 
 const voteCount = [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count'];
 
-// get all users posts
+// get all users posts api/posts
 router.get('/', (req, res) => {
   console.log('======================');
   Post.findAll({
@@ -12,6 +12,15 @@ router.get('/', (req, res) => {
     ],
     order: [['created_at', 'DESC']],
     include: [
+      //include comment data
+      {
+        model: Comment,
+        attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+        include: {
+          model: User,
+          attributes: ['username']
+        }
+      },
       {
         model: User,
         attributes: ['username']
@@ -26,7 +35,7 @@ router.get('/', (req, res) => {
 
 });
 
-//get a single user post  by post id
+//get a single user post  by post id api/post/:id
 router.get('/:id', (req, res) => {
   Post.findOne({
     where: {
@@ -34,6 +43,14 @@ router.get('/:id', (req, res) => {
     },
     attributes: ['id', 'post_url', 'title', 'created_at', voteCount],
     include: [
+      {
+        model: Comment,
+        attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+        include: {
+          model: User,
+          attributes: ['username']
+        }
+      },
       {
         model: User,
         attributes: ['username']
@@ -71,7 +88,7 @@ router.post('/', (req, res) => {
 // PUT /api/posts/upvote
 router.put('/upvote', (req, res) => {
   //run custom static method
-  Post.upvote(req, body, [Vote])
+  Post.upvote(req.body, { Vote })
     .then(dbPostData => res.json(dbPostData))
     .catch(err => res.json(err));
 });
