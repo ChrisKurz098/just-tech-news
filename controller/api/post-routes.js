@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const sequelize = require('../../config/connection');
-const { Post, User, Vote, Comment } = require('../../models');
+const { Post, User, Comment, Vote } = require('../../models');
 
 const voteCount = [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count'];
 
@@ -87,10 +87,18 @@ router.post('/', (req, res) => {
 
 // PUT /api/posts/upvote
 router.put('/upvote', (req, res) => {
+  
   //run custom static method
-  Post.upvote(req.body, { Vote })
-    .then(dbPostData => res.json(dbPostData))
-    .catch(err => res.json(err));
+  if (req.session) {
+    //pass session id along with all destructed properties
+    Post.upvote({ ...req.body, user_id: req.session.user_id }, {Vote,  Comment, User })
+    .then(updatedVoteData  => res.json(updatedVoteData ))
+    .catch(err => {
+      console.log(err);
+      res.status(500).json(err)
+    });
+  }
+ 
 });
 
 //update a users post by its id
