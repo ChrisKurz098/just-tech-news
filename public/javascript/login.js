@@ -45,7 +45,8 @@ async function loginFormHandler(event) {
         
         //check response
         if (response.ok){
-            document.location.replace('/');
+            //if login is ok then go to dashboard
+            document.location.replace('/dashboard');
         } else {
             alert(response.statusText)
         }
